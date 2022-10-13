@@ -1,7 +1,10 @@
 # imported modules
+
 from flask_sqlalchemy import SQLAlchemy
 from flask import Flask, jsonify, request, make_response
 from flask_restframework import RestFramework, status
+from email_validator import validate_email
+from utils import *
 
 
 # app settings
@@ -43,9 +46,31 @@ class Task(db.Model):
         return f"User('{self.title}')"
 
 
-@app.route('/', methods=['GET', 'POST'])
-def home():
-    return "Hello Word!"
+@app.route('/sign_up', methods=['POST'])
+def sign_up():
+
+    """sign up for the user should be valid username password and unique email"""
+    try:
+        username = request.form['username']
+        password = request.form['password']
+        email = request.form['email']
+        user_exist = User.query.filter_by(email=email).first()
+        if user_exist:
+            return jsonify({'status': False, 'code': status.HTTP_400_BAD_REQUEST,
+                            'message': "User already exit with this email. Please enter a unique email."})
+        else:
+            email = validate_email(email)
+            if len(password) <= 6:
+                message = "Password Should be greater or equel to 6 digits......."
+                return show_validation_error(message)
+
+            user = User(username=username, password=password, email=email) # passwork should be encrypeted
+            db.session.add(user)
+            db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'status':False, 'code':status.HTTP_400_BAD_REQUEST, 'message': str(e)})
+    return jsonify({'status':True, 'code':status.HTTP_201_CREATED, 'message': "User created successfully."})
 
 if __name__ == '__main__':
     app.run()
