@@ -5,6 +5,7 @@ from flask import Flask, jsonify, request, make_response
 from flask_restframework import RestFramework, status
 from email_validator import validate_email
 from utils import *
+from msgs import *
 
 
 # app settings
@@ -50,27 +51,26 @@ class Task(db.Model):
 def sign_up():
 
     """sign up for the user should be valid username password and unique email"""
+
     try:
         username = request.form['username']
         password = request.form['password']
         email = request.form['email']
         user_exist = User.query.filter_by(email=email).first()
         if user_exist:
-            return jsonify({'status': False, 'code': status.HTTP_400_BAD_REQUEST,
-                            'message': "User already exit with this email. Please enter a unique email."})
+            return show_validation_error(user_already_exist())
         else:
             email = validate_email(email)
             if len(password) <= 6:
-                message = "Password Should be greater or equel to 6 digits......."
-                return show_validation_error(message)
+                return show_validation_error(passwork_error_msg())
 
             user = User(username=username, password=password, email=email) # passwork should be encrypeted
             db.session.add(user)
             db.session.commit()
+            return created_message("User created successfully."})
+")
     except Exception as e:
         db.session.rollback()
-        return jsonify({'status':False, 'code':status.HTTP_400_BAD_REQUEST, 'message': str(e)})
-    return jsonify({'status':True, 'code':status.HTTP_201_CREATED, 'message': "User created successfully."})
-
+        return exception_error(str(e))
 if __name__ == '__main__':
     app.run()
