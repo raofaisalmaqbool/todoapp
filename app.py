@@ -53,24 +53,26 @@ def sign_up():
     """sign up for the user should be valid username password and unique email"""
 
     try:
-        username = request.form['username']
         password = request.form['password']
+        confirm_password = request.form['confirm_password']
         email = request.form['email']
-        user_exist = User.query.filter_by(email=email).first()
+        user_exist = User.query.filter_by(email=email).first()  # will find the existing user
         if user_exist:
             return show_validation_error(user_already_exist())
         else:
-            email = validate_email(email)
+            validated_email = validate_email(email)  # validating email by build in function
             if len(password) <= 6:
                 return show_validation_error(passwork_error_msg())
-
-            user = User(username=username, password=password, email=email) # passwork should be encrypeted
+            if password != confirm_password:
+                return show_validation_error(password_not_matched())
+            username = validated_email.email.split('@')[0]   # will get a unique username form email
+            user = User(username=username, password=password, email=validated_email.email) # passwork should be encrypeted
             db.session.add(user)
             db.session.commit()
-            return created_message("User created successfully."})
-")
+            return created_message("User created successfully.")
     except Exception as e:
         db.session.rollback()
         return exception_error(str(e))
+
 if __name__ == '__main__':
     app.run()

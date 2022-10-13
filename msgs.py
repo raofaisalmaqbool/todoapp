@@ -9,3 +9,6 @@ def passwork_error_msg():
 
 def user_already_exist():
     return "User already exit with this email. Please enter a unique email."
+
+def password_not_matched():
+    return "Your entered password not matched."
